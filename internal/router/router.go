@@ -8,6 +8,7 @@ import (
 
 func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	healthHandler := handler.NewHealthHandler(db)
+	// app.Get("/health", healthHandler.Check)
 	api := app.Group("/api/v1")
 
 	api.Get("/health", healthHandler.Check) 
