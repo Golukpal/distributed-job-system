@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+
 	"github.com/Golukpal/job-distributor/internal/config"
 	"github.com/Golukpal/job-distributor/internal/database"
 	"github.com/Golukpal/job-distributor/internal/router"
-	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
@@ -17,7 +21,24 @@ func main() {
 	}
 	defer db.Close()
 
-	app := fiber.New()
+	migrationCtx, cancel := context.WithTimeout(
+		context.Background(),
+		30*time.Second,
+	)
+
+	err = database.RunMigrations(migrationCtx, db)
+	cancel()
+
+	if err != nil {
+		log.Fatalf("Database migration failed: %v", err)
+	}
+
+	log.Println("Database migrations completed")
+
+	app := fiber.New(fiber.Config{
+		AppName:   cfg.AppName,
+		BodyLimit: 2 * 1024 * 1024,
+	})
 
 	router.SetupRoutes(app, db)
 
